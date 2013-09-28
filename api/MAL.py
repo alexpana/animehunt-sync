@@ -3,10 +3,13 @@ from api import API
 
 class MyAnimeList(API):
     # Requires a partial or full anime TITLE.
-    _ANIME_SEARCH_QUERY = 'http://myanimelist.net/api/anime/search.xml?q=%s'
+    _URL_ANIME_SEARCH_QUERY = 'http://myanimelist.net/api/anime/search.xml?q=%s'
 
     # Requires the anime ID and the anime TITLE
-    _ANIME_USERRECS_URL = "http://myanimelist.net/anime/%d/%s/userrecs"
+    _URL_ANIME_USERRECS = "http://myanimelist.net/anime/%s/%s/userrecs"
+
+    # Requires the anime ID and the anime TITLE
+    _URL_ANIME_MAIN = "http://myanimelist.net/anime/%s/%s/"
 
     def __init__(self, **settings):
         API.__init__(self, __name__)
@@ -20,41 +23,51 @@ class MyAnimeList(API):
 
         self._auth = (settings['username'], settings['password'])
 
-    def search_anime(self, title):
+    def anime(self, title):
         """
-        Returns a list of animes that match the title
+        Returns the anime who's title is equal to the title parameter
         """
-        url = MyAnimeList._ANIME_SEARCH_QUERY % "+".join(title.split(" "))
+        url = MyAnimeList._URL_ANIME_SEARCH_QUERY % "+".join(title.split(" "))
         mal_response = self._http_request(url, self._auth)
 
         if mal_response != "":
-            return self._parse_anime_search_result(mal_response)
-        else:
-            return []
+            anime_list = self._parse_anime_search_result(mal_response)
+            for current_anime in anime_list:
+                if current_anime['title'] == title:
+                    return current_anime
+
+        return None
 
     def recommendations(self, title):
         """
         Returns a list of recommendations for the anime matching title
         """
-        anime_list = self.search_anime(title)
-        anime = None
-        for anime_entry in anime_list:
-            if anime_entry['title'] == title:
-                anime = (int(anime_entry['id']), anime_entry['title'])
-                break
+        anime_title = self.search_title(title)
 
-        if len(anime_list) == 0:
-            self.log.error("No anime was found with that name.")
-            return None
-        elif len(anime_list) > 1 and anime is None:
-            self.log.error("More than one anime was found and none matched the title perfectly.")
-            self.log.error("Found titles: " + str(map(lambda x: x['title'], anime_list)))
-            return None
+        if anime_title is None:
+            return []
 
-        url = self._ANIME_USERRECS_URL % anime
+        anime = self.anime(anime_title)
+        url = self._URL_ANIME_USERRECS % (anime['id'], anime['title'])
         mal_response = self._http_request(url, self._auth)
 
         return self._parse_userrecs_html_result(mal_response)
+
+    def url(self, title):
+        anime = self.anime(title)
+        return (self._URL_ANIME_MAIN % (anime['id'], anime['title'])).replace(" ", "%20")
+
+    def titles(self, title=None):
+        if title is None:
+            self.log("MAL api does not currently support searching for all names.")
+            return []
+        else:
+            url = MyAnimeList._URL_ANIME_SEARCH_QUERY % "+".join(title.split(" "))
+            mal_response = self._http_request(url, self._auth)
+            anime_list = []
+            if mal_response != "":
+                anime_list = self._parse_anime_search_result(mal_response)
+            return map(lambda x: x['title'], anime_list)
 
     def _parse_anime_search_result(self, xml):
         """
@@ -66,6 +79,8 @@ class MyAnimeList(API):
             anime = {}
             for anime_attribute in anime_entry:
                 anime[anime_attribute.tag] = anime_attribute.text
+                if anime_attribute.tag == 'episodes':
+                    anime[anime_attribute.tag] = int(anime_attribute.text)
             anime_list.append(anime)
         return anime_list
 
@@ -90,6 +105,7 @@ class MyAnimeList(API):
                     recommendation['count'] = 1
 
                 recommendations.append(recommendation)
-            except: pass
+            except:
+                pass
 
         return recommendations

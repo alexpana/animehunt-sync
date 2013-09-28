@@ -8,13 +8,17 @@ class AniDB(API):
         API.__init__(self, __name__)
         pass
 
-    def titles(self):
+    def titles(self, title=None):
         anidb_response = self._http_request(AniDB._ANIDB_ANIMETITLES_SOURCE)
-        return self._parse_animetitles_xml(anidb_response)
+        return self._parse_animetitles_xml(anidb_response).keys()
+
+    def synonyms(self, title):
+        anidb_response = self._http_request(AniDB._ANIDB_ANIMETITLES_SOURCE)
+        return self._parse_animetitles_xml(anidb_response)[title]['all']
 
     def _parse_animetitles_xml(self, xml):
         root = self._parse_xml(xml)
-        anime_titles = []
+        anime_titles = {}
 
         for anime in root:
             element_titles = {}
@@ -39,7 +43,5 @@ class AniDB(API):
                 entry[0] = element_titles['main']
 
             entry[1] = element_titles['main']
-
-            anime_titles.append(entry)
-
+            anime_titles[entry[0]] = ({'jp': entry[1], 'all': map(lambda x: x.text, anime.getchildren())})
         return anime_titles

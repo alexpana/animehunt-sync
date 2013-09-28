@@ -14,7 +14,6 @@ DB_CONNECTION = {
 
 CACHE = {}
 
-
 def log_event(event):
     CACHE["last_event"] = event
     print event,
