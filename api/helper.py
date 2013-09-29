@@ -9,8 +9,9 @@ class Helper():
 
     @staticmethod
     def canonic_form(title):
-        title = re.sub(r"[^a-zA-Z]+", "", title).lower()
-        words = filter(lambda x: len(x) > 0, title.split(" "))
+        title = re.sub(r"[^a-zA-Z ]+", "", title).lower()
+        return filter(lambda x: len(x) > 0 and x != 'the', title.split(" "))
+
 
     @staticmethod
     def canonic_equals(title1, title2):
