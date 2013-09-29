@@ -6,7 +6,7 @@ sync.py
 
 import sys
 
-from actions import Database
+from operations import Database
 from api.MAL import MyAnimeList
 from api import API
 from api.aniDB import AniDB

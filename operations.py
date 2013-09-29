@@ -14,3 +14,8 @@ class Database():
 
     def update_anime(self, anime):
         pass
+
+
+class Operations():
+    def __init__(self):
+        pass
