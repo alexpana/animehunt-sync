@@ -1,4 +1,4 @@
-from api import API
+from api import API, Helper
 
 __author__ = 'Alex'
 
@@ -20,10 +20,9 @@ class AnimeSeason(API):
         if title is None:
             return all_titles
         else:
-            title = title.lower()
             matching_titles = []
             for current_title in all_titles:
-                if current_title.lower().find(title) > -1:
+                if Helper.canonic_matching(title, current_title):
                     matching_titles.append(current_title)
         return matching_titles
 

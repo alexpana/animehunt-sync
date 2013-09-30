@@ -2,21 +2,28 @@ from api import API
 
 
 class AniDB(API):
-    _ANIDB_ANIMETITLES_SOURCE = "http://anidb.net/api/animetitles.xml.gz"
+    _ANIDB_ANIME_TITLES_SOURCE = "http://anidb.net/api/animetitles.xml.gz"
+
+    _CACHE = {}
 
     def __init__(self):
         API.__init__(self, __name__)
         pass
 
     def titles(self, title=None):
-        anidb_response = self._http_request(AniDB._ANIDB_ANIMETITLES_SOURCE)
-        return self._parse_animetitles_xml(anidb_response).keys()
+        self.validate_cache()
+        return self._CACHE['titles'].keys()
 
     def synonyms(self, title):
-        anidb_response = self._http_request(AniDB._ANIDB_ANIMETITLES_SOURCE)
-        return self._parse_animetitles_xml(anidb_response)[title]['all']
+        self.validate_cache()
+        return self._CACHE['titles'][title]['all']
 
-    def _parse_animetitles_xml(self, xml):
+    def validate_cache(self):
+        if 'titles' not in self._CACHE:
+            anidb_response = self._http_request(AniDB._ANIDB_ANIME_TITLES_SOURCE)
+            self._CACHE['titles'] = self._parse_titles_xml(anidb_response)
+
+    def _parse_titles_xml(self, xml):
         root = self._parse_xml(xml)
         anime_titles = {}
 

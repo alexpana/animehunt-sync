@@ -1,3 +1,5 @@
+from api.helper import Helper
+
 __author__ = 'Alex'
 import logging
 import requests
@@ -33,16 +35,20 @@ class API:
         against all the titles provided by the API
         """
         self.log.info("Searching for titles matching %s" % title)
-        found_title = None
+
+        canonic_title = Helper.canonic_form(title)
+        self_titles = self.titles(title)
         matching_titles = []
-        title = title.lower()
-        anime_titles = self.titles(title)
-        for current_title in anime_titles:
-            lower_current_title = current_title.lower()
-            if lower_current_title == title:
-                found_title = current_title
-            elif lower_current_title.find(title) > -1:
-                matching_titles.append(current_title)
+        found_title = None
+
+        for current_title in self_titles:
+            canonic_titles_self = map(lambda x: Helper.canonic_form(x), [current_title] + self.synonyms(current_title))
+
+            for canonic_synonym in canonic_titles_self:
+                if Helper.canonic_matching(canonic_title, canonic_synonym):
+                    matching_titles.append(current_title)
+                if Helper.canonic_equals(canonic_title, canonic_synonym):
+                    found_title = current_title
 
         if len(matching_titles) == 1 and found_title is None:
             found_title = matching_titles[0]
@@ -62,6 +68,12 @@ class API:
         """
         Returns a list of all the titles provided by the API if title is None,
         else returns the list of titles that partially match the title parameter
+        """
+        return []
+
+    def synonyms(self, title=None):
+        """
+        Returns a list of synonyms for the title
         """
         return []
 

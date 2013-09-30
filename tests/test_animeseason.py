@@ -1,9 +1,7 @@
+import unittest
+
 from api import API
 from api.animeseason import AnimeSeason
-
-__author__ = 'Alex'
-
-import unittest
 
 
 class AnimeseasonTest(unittest.TestCase):
@@ -28,3 +26,6 @@ class AnimeseasonTest(unittest.TestCase):
         self.log.info(self.api.anime(titles[0]))
         self.log.info(self.api.recommendations(titles[0])[0])
 
+    def test_title_search(self):
+        titles = self.api.titles("clannad movie")
+        self.assertEqual(len(titles), 1)
