@@ -42,25 +42,21 @@ class API:
         found_title = None
 
         for current_title in self_titles:
-            canonic_titles_self = map(lambda x: Helper.canonic_form(x), [current_title] + self.synonyms(current_title))
-
-            for canonic_synonym in canonic_titles_self:
-                if Helper.canonic_matching(canonic_title, canonic_synonym):
+            for synonym in [current_title] + self.synonyms(current_title):
+                if Helper.canonic_matching(canonic_title, synonym):
                     matching_titles.append(current_title)
-                if Helper.canonic_equals(canonic_title, canonic_synonym):
-                    found_title = current_title
+                if Helper.canonic_equals(canonic_title, synonym):
+                    self.log.info("Found exact title: %s" % current_title)
+                    return current_title
 
-        if len(matching_titles) == 1 and found_title is None:
-            found_title = matching_titles[0]
-
-        if found_title is None:
-            if len(matching_titles) > 1:
-                self.log.error("More than one anime was found and none matched the title perfectly.")
-                self.log.error("Found titles: " + str(matching_titles))
-            else:
-                self.log.error("No anime was found with that name.")
+        if len(matching_titles) > 1:
+            self.log.error("More than one anime was found and none matched the title perfectly.")
+            self.log.error("Found titles: " + str(matching_titles))
+        elif len(matching_titles) == 0:
+            self.log.error("No anime was found with that name.")
         else:
-            self.log.info("Found title %s" % found_title)
+            found_title = matching_titles[0]
+            self.log.info("Found title by unique match: %s" % found_title)
 
         return found_title
 

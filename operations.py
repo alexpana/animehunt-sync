@@ -1,3 +1,6 @@
+from api.aniDB import AniDB
+from api.animeseason import AnimeSeason
+
 __author__ = 'Alex'
 
 import MySQLdb
@@ -17,5 +20,15 @@ class Database():
 
 
 class Operations():
-    def __init__(self):
-        pass
+    def __init__(self, db_connection):
+        self.connection = db_connection
+        self.api_animeseason = AnimeSeason()
+        self.api_anidb = AniDB()
+
+    def sync_animeseason_titles(self):
+        match_failures = 0
+        for animeseason_title in self.api_animeseason.titles():
+            anidb_title = self.api_anidb.search_title(animeseason_title)
+            if anidb_title is None:
+                match_failures += 1
+        return match_failures
