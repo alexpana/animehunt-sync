@@ -31,4 +31,4 @@ class Operations():
             anidb_title = self.api_anidb.search_title(animeseason_title)
             if anidb_title is None:
                 match_failures += 1
-        return match_failures
+        return match_failures, len(self.api_animeseason.titles())
