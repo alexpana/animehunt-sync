@@ -16,7 +16,7 @@ class TestOperations(unittest2.TestCase):
     def test_animeseason_title_sync(self):
         start_time = time.time()
 
-        failed_matches, total_titles = self.operations.sync_animeseason_titles()
+        failed_matches, total_titles = self.operations.initialize_animeseason_titles()
 
         end_time = time.time()
 
