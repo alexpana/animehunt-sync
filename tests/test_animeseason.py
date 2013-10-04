@@ -2,6 +2,7 @@ import unittest
 
 from api import API
 from api.animeseason import AnimeSeason
+from core import Log
 
 
 class AnimeseasonTest(unittest.TestCase):
@@ -10,7 +11,7 @@ class AnimeseasonTest(unittest.TestCase):
         API.CACHE['http://www.animeseason.com/gosick/'] = open("../cache/animeseason.gosick.html").read()
 
         self.api = AnimeSeason()
-        self.log = API.create_log(__name__)
+        self.log = Log.create_log(__name__)
 
     def test_anime_list(self):
         # there should be 909 anime titles

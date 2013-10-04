@@ -1,11 +1,10 @@
-from api.helper import Helper
-
-__author__ = 'Alex'
-import logging
-import requests
-import sys
 from cStringIO import StringIO
+
+import requests
 from lxml import etree
+
+from api.helper import Helper
+from core import Log
 
 
 class API:
@@ -15,7 +14,7 @@ class API:
     def __init__(self, module):
 
         # Initialize the Logger object
-        self.log = API.create_log(module)
+        self.log = Log.create_log(module)
 
     def anime(self, title):
         return {}
@@ -90,16 +89,6 @@ class API:
             pass
             self.log.debug("Cached response was found.")
         return API.CACHE[url]
-
-    @staticmethod
-    def create_log(module):
-        log = logging.getLogger(module)
-        log.setLevel(logging.DEBUG)
-        if len(log.handlers) == 0:
-            handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(logging.Formatter("[%(asctime)s] [%(name)s] %(message)s", "%H:%M:%S"))
-            log.addHandler(handler)
-        return log
 
     @staticmethod
     def _parse_xml(xml):

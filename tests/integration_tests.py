@@ -1,7 +1,8 @@
 import unittest
 from api import API
-from api.aniDB import AniDB
+from api.anidb import AniDB
 from api.animeseason import AnimeSeason
+from core import Log
 
 
 class IntegrationTests(unittest.TestCase):
@@ -17,7 +18,7 @@ class IntegrationTests(unittest.TestCase):
 
 
     def setUp(self):
-        self.log = API.create_log(__name__)
+        self.log = Log.create_log(__name__)
         self.anidb = AniDB()
         self.animeseason = AnimeSeason()
 

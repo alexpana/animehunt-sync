@@ -9,7 +9,7 @@ class AnimeSeason(API):
     # Requires the title of the anime, formatted
     _URL_ANIME_MAIN = "http://www.animeseason.com/%s/"
 
-    _INTERNAL_CACHE = {'animes': {}}
+    _INTERNAL_CACHE = {'animes': {}, 'titles': {}}
 
     def __init__(self):
         API.__init__(self, __name__)
@@ -22,6 +22,7 @@ class AnimeSeason(API):
         else:
             matching_titles = []
             for current_title in all_titles:
+                current_title = self._sanitize_title(current_title)
                 if Helper.canonic_matching(title, current_title):
                     matching_titles.append(current_title)
         return matching_titles
@@ -33,11 +34,11 @@ class AnimeSeason(API):
         return self._INTERNAL_CACHE['animes'][title]
 
     def url(self, title):
-        if not 'titles' in self._INTERNAL_CACHE:
+        if not 'urls' in self._INTERNAL_CACHE:
             self.titles()
 
-        if title in self._INTERNAL_CACHE['titles'].keys():
-            return self._INTERNAL_CACHE['titles'][title]
+        if title in self._INTERNAL_CACHE['urls'].keys():
+            return self._INTERNAL_CACHE['urls'][title]
         else:
             return None
 
@@ -45,12 +46,12 @@ class AnimeSeason(API):
         return self.anime(title)['recommendations']
 
     def _parse_titles(self, html):
-        if not "titles" in AnimeSeason._INTERNAL_CACHE.keys():
+        if not "urls" in AnimeSeason._INTERNAL_CACHE.keys():
             root_element = self._parse_html(html)
             titles = dict(
                 map(lambda x: (x.text, x.attrib['href']), root_element.xpath(".//ul[@class='series_alpha']/li/a")))
-            AnimeSeason._INTERNAL_CACHE["titles"] = titles
-        return AnimeSeason._INTERNAL_CACHE["titles"].keys()
+            AnimeSeason._INTERNAL_CACHE["urls"] = titles
+        return AnimeSeason._INTERNAL_CACHE["urls"].keys()
 
     def _parse_anime(self, html):
         root = self._parse_html(html)
@@ -101,3 +102,7 @@ class AnimeSeason(API):
                 lambda x: {'name': x[0], 'relation': x[1]}, zip(relation_tokens[::2], relation_tokens[1::2]))
 
         return anime
+
+    def _sanitize_title(self, title):
+        """Changes the title slightly to improve it's identity"""
+        return title.replace("(Movie)", "movie")
