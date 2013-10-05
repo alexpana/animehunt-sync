@@ -28,6 +28,9 @@ class HelperTest(unittest.TestCase):
 
         self.assertNotCanonicEqual("Clannad", "Clannad Movie")
 
+    def test_canonic_equals_dash1(self):
+        self.assertCanonicEqual("Nodame Cantabile Paris-Hen", "Nodame Cantabile: Paris Hen")
+
     def assertNotCanonicEqual(self, title1, title2):
         self.assertFalse(Helper.canonic_equals(title1, title2),
                          "'%s' was equal to '%s' in canonic form" % (title1, title2))

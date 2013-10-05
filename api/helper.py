@@ -12,20 +12,22 @@ class Helper():
         if type(title) != str:
             return title
         if title not in Helper._CACHE['canonic_forms']:
+            processed_title = title.lower().replace("-", " ")
             clean_title = ""
-            ignored_characters = "()[]/.!:?-`'\""
+            ignored_characters = "()[]/.!:?`'\"~"
             paren_count = 0
-            for c in title.lower():
+            for c in processed_title:
                 if c == '(':
                     paren_count += 1
                 if c == ')':
                     paren_count -= 1
                 if paren_count == 0 and c not in ignored_characters:
                     clean_title += c
-            value = Helper._CACHE['canonic_forms'] = filter(lambda x: len(x) > 0 and x not in ('of', 'the', 'ova'),
-                                                            clean_title.split(" "))
+            value = Helper._CACHE['canonic_forms'][title] = filter(
+                lambda x: len(x) > 0 and x not in ('of', 'the', 'ova'),
+                clean_title.split(" "))
             return value
-        return Helper._CACHE['canonic_forms']
+        return Helper._CACHE['canonic_forms'][title]
 
     @staticmethod
     def canonic_equals(title1, title2):
