@@ -28,6 +28,9 @@ class HelperTest(unittest.TestCase):
 
         self.assertNotCanonicEqual("Clannad", "Clannad Movie")
 
+    def test_canonic_equals_digits(self):
+        self.assertCanonicEqual("Kanon 2006", "Kannon (2006)")
+
     def test_canonic_equals_dash1(self):
         self.assertCanonicEqual("Nodame Cantabile Paris-Hen", "Nodame Cantabile: Paris Hen")
 
