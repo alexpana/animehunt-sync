@@ -11,23 +11,20 @@ class AniDBOperations:
         self.log = Log.create_log(__name__)
 
     def truncate(self):
-        self.db.cursor.execute("TRUNCATE anime")
-        self.db.cursor.execute("TRUNCATE synonyms")
+        """
+        Deletes every entry from the title conversion table
+        """
+        self.db.cursor.execute("TRUNCATE titles_anidb")
         self.db.connection.commit()
 
     def sync_titles(self):
-        api_titles = self.api.titles()
-        db_titles = []
-        new_titles = []
-
-        self.db.cursor.execute("SELECT title FROM anime")
-        db_titles = map(lambda x: x[0], self.db.cursor.fetchall())
-
-        new_titles = set(api_titles).difference(set(db_titles))
-        self.log.info("Found %d new titles." % len(new_titles))
-
+        db_titles = self._database_titles()
+        new_titles = self._find_new_titles()
         if len(new_titles) > 0:
-            self._add_new_titles(new_titles)
+            self.log.info("Found %d new titles." % len(new_titles))
+            self._insert_titles(new_titles)
+        else:
+            self.log.info("No new titles found.")
 
         self._sync_old_titles(db_titles)
 
@@ -41,7 +38,6 @@ class AniDBOperations:
             self.sync_synonyms(title, anime_id)
 
     def sync_synonyms(self, title, anime_id=None):
-
         self.log.info("Synchronizing synonyms for title %s." % title)
 
         # Try to find out the animes ID
@@ -70,32 +66,55 @@ class AniDBOperations:
                     "Failed to insert synonym %s of %s into the synonyms table." % (unicode(synonym), title))
                 self.log.debug("Exception message: %s", e)
 
-        self.db.connection.commit()
+    def _database_titles(self):
+        """
+        Returns a list of all the titles in the database.
+        """
+        self.db.cursor.execute("SELECT title FROM anime")
+        db_titles = map(lambda x: x[0], self.db.cursor.fetchall())
+        return db_titles
 
-    def _insert_new_title(self, anime_id, title):
-        self.db.cursor.execute(
-            "INSERT INTO anime (id, title, type, status, summary, episode_count) "
-            "VALUES (%s, %s, %s, %s, %s, %s)",
-            (anime_id, title, -1, -1, "", -1))
+    def _find_new_titles(self):
+        """
+        Returns a list of titles
+        that are provided by the API
+        but are not currently in the database.
+        """
+        self.db.cursor.execute("SELECT anidb_id FROM titles_anidb")
+        db_indices = map(lambda x: int(x[0]), self.db.cursor.fetchall())
 
+        api_indices = map(lambda x: int(self.api.anime(x)['id']), self.api.titles())
+        new_indices = set(api_indices).difference(set(db_indices))
+
+        # TODO: Finish this!
+        #return filter(lambda x: x['id'] in new_indices, )
+
+    def _insert_title(self, title):
+        """
+        Inserts a title in the database
+        adding an entry to both 'anime'
+        and 'titles_anidb'.
+        """
+        self.log.info("Inserting title %s." % title)
+
+        # Add a new anime to the database with no additional information
+        anime_id = self.db.merge_anime({'title': title})
+
+        # Add a conversion entry in the titles_anidb table
         self.db.cursor.execute(
             "INSERT INTO titles_anidb (animehunt_id, anidb_id) "
             "VALUES (%s, %s)" % (anime_id, self.api.anime(title)['id'])
         )
-
         self.db.connection.commit()
 
-    def _add_new_titles(self, new_titles):
-        self.log("Attempting to add %d new titles to the database." % len(new_titles))
-        for title in new_titles:
-            self.log.info("Inserting title %s." % title)
-            self.db.cursor.execute("SELECT MAX(id) FROM anime")
-            result = self.db.cursor.fetchall()
-            anime_id = 1 if result[0][0] is None else int(result[0][0]) + 1
+        self.sync_synonyms(title, anime_id)
 
-            self._insert_new_title(anime_id, title)
+        return anime_id
 
-            self.sync_synonyms(title, anime_id)
+    def _insert_titles(self, titles):
+        self.log("Attempting to add %d titles to the database." % len(titles))
+        for title in titles:
+            self._insert_title(title)
 
     def _sync_old_titles(self, old_titles):
         self.log.info("Attempting to synchronize title IDs.")

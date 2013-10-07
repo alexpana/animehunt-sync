@@ -12,7 +12,7 @@ class AnimeSeasonOperations():
     def sync_titles(self):
         anidb = AniDB()
         self.sync_new_titles(anidb)
-        self.sync_unmatched_titles(anidb)
+        self.sync_unmatched_titles()
 
     def sync_new_titles(self, anidb):
         new_titles = self._find_new_titles()
@@ -21,13 +21,20 @@ class AnimeSeasonOperations():
         for title in new_titles:
             self._match_and_sync(title, anidb)
 
-    def sync_unmatched_titles(self, anidb):
+    def sync_unmatched_titles(self):
         unmatched_titles = self._find_unmatched_titles()
 
         self.log.info("Found %d unmatched titles." % len(unmatched_titles))
 
         for title in unmatched_titles:
-            self._match_and_sync(title, anidb)
+            animehunt_id = self.db.find_anime({'title': title})['id']
+            if animehunt_id is not None:
+                self.log.info("Found match for title %s." % title)
+                self._update_title(title, animehunt_id)
+
+    def sync_synonyms(self, title):
+        # TODO: IMPLEMENT!
+        pass
 
     def _find_unmatched_titles(self):
         self.db.cursor.execute("SELECT title FROM titles_animeseason WHERE animehunt_id = -1")
@@ -50,13 +57,13 @@ class AnimeSeasonOperations():
             self.db.cursor.execute("SELECT animehunt_id FROM titles_anidb WHERE anidb_id=%s" % anidb_id)
             animehunt_id = self.db.cursor.fetchall()[0][0]
 
-            self.db.cursor.execute("SELECT id FROM titles_animeseason WHERE title='%s'" % title)
+            self.db.cursor.execute("SELECT id FROM titles_animeseason WHERE title=\"%s\"" % title)
             entry_id = self.db.cursor.fetchall()[0][0]
 
             if entry_id is None:
                 self._insert_title(animehunt_id, title)
             else:
-                self._update_title(entry_id, animehunt_id, title)
+                self._update_title(title, animehunt_id, entry_id)
 
         else:
             self.log.info("Failed to match %s." % title)
@@ -71,11 +78,14 @@ class AnimeSeasonOperations():
             self.log.debug("Failed to insert %s into the database." % title)
             self.log.debug("Exception: %s" % e)
 
-    def _update_title(self, entry_id, animehunt_id, title):
+    def _update_title(self, title, animehunt_id, entry_id=None):
+        if entry_id is None:
+            self.db.cursor.execute("SELECT id FROM titles_animeseason WHERE title =\"%s\"" % title)
+            entry_id = self.db.cursor.fetchall()[0][0]
         try:
             self.db.cursor.execute(
                 "UPDATE titles_animeseason "
-                "SET animehunt_id=%s, title='%s'"
+                "SET animehunt_id=%s, title=\"%s\" "
                 "WHERE id=%s" % (animehunt_id, title, entry_id))
             self.db.connection.commit()
         except Exception as e:
