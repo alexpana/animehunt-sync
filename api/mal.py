@@ -2,8 +2,15 @@ from api import API
 
 
 class MyAnimeList(API):
+
+    # Name of a power user
+    _POWER_USER_NAME = "coty9090"
+
+    # Url of a power user's anime list. Guaranteed to be large!
+    _URL_POWER_USER_ANIME_LIST = "http://myanimelist.net/malappinfo.php?u=%s&status=all&type=anime" % _POWER_USER_NAME
+
     # Requires a partial or full anime TITLE.
-    _URL_ANIME_SEARCH_QUERY = 'http://myanimelist.net/api/anime/search.xml?q=%s'
+    _URL_ANIME_SEARCH_QUERY = "http://myanimelist.net/api/anime/search.xml?q=%s"
 
     # Requires the anime ID and the anime TITLE
     _URL_ANIME_USERRECS = "http://myanimelist.net/anime/%s/%s/userrecs"
@@ -59,8 +66,8 @@ class MyAnimeList(API):
 
     def titles(self, title=None):
         if title is None:
-            self.log("MAL api does not currently support searching for all names.")
-            return []
+            self.log.warn("Support for listing all titles is experimental and incomplete.")
+            return self._all_titles()
         else:
             url = MyAnimeList._URL_ANIME_SEARCH_QUERY % "+".join(title.split(" "))
             mal_response = self._http_request(url, self._auth)
@@ -109,3 +116,15 @@ class MyAnimeList(API):
                 pass
 
         return recommendations
+
+    def _all_titles(self):
+        response = self._http_request(MyAnimeList._URL_POWER_USER_ANIME_LIST, self._auth)
+        return self._parse_user_animelist_xml_result(response)
+
+    def _parse_user_animelist_xml_result(self, xml):
+        xml_root = API._parse_xml(xml)
+        return map(lambda x: x.text, xml_root.xpath(".//series_title"))
+
+
+
+
