@@ -66,7 +66,7 @@ class API:
         """
         return []
 
-    def synonyms(self, title=None):
+    def synonyms(self, title):
         """
         Returns a list of synonyms for the title
         """

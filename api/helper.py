@@ -9,7 +9,7 @@ class Helper():
 
     @staticmethod
     def canonic_form(title):
-        if type(title) != str:
+        if type(title) not in (str, unicode):
             return title
         if title not in Helper._CACHE['canonic_forms']:
             processed_title = title.lower().replace("-", " ")
@@ -21,7 +21,7 @@ class Helper():
                     paren_count += 1
                 if c == ')':
                     paren_count -= 1
-                if paren_count == 0 and c not in ignored_characters:
+                if paren_count == 0 and c not in ignored_characters or c.isdigit():
                     clean_title += c
             value = Helper._CACHE['canonic_forms'][title] = filter(
                 lambda x: len(x) > 0 and x not in ('of', 'the', 'ova'),
