@@ -1,14 +1,15 @@
 import unittest
 
-from api import API
+from api.abstract import AbstractAPI
 from api.animeseason import AnimeSeason
-from core import Log
+from core.log import Log
 
 
 class AnimeseasonTest(unittest.TestCase):
     def setUp(self):
-        API.CACHE['http://www.animeseason.com/anime-list/'] = open("../cache/animeseason.anime-list.html").read()
-        API.CACHE['http://www.animeseason.com/gosick/'] = open("../cache/animeseason.gosick.html").read()
+        AbstractAPI.CACHE['http://www.animeseason.com/anime-list/'] = open(
+            "../cache/animeseason.anime-list.html").read()
+        AbstractAPI.CACHE['http://www.animeseason.com/gosick/'] = open("../cache/animeseason.gosick.html").read()
 
         self.api = AnimeSeason()
         self.log = Log.create_log(__name__)
@@ -24,8 +25,8 @@ class AnimeseasonTest(unittest.TestCase):
     def test_anime_information(self):
         titles = self.api.titles("clannad")
         self.log.info(titles)
-        self.log.info(self.api.anime(titles[0]))
-        self.log.info(self.api.recommendations(titles[0])[0])
+        self.log.info(self.api.anime(titles[0][1]))
+        self.log.info(self.api.recommendations(titles[0][1])[0])
 
     def test_title_search(self):
         titles = self.api.titles("clannad movie")

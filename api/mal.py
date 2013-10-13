@@ -1,8 +1,8 @@
-from api import API
+import json
+from api.abstract import AbstractAPI
 
 
-class MyAnimeList(API):
-
+class MyAnimeList(AbstractAPI):
     # Name of a power user
     _POWER_USER_NAME = "coty9090"
 
@@ -18,8 +18,11 @@ class MyAnimeList(API):
     # Requires the anime ID and the anime TITLE
     _URL_ANIME_MAIN = "http://myanimelist.net/anime/%s/%s/"
 
+    # Requires the anime ID
+    _URL_UNOFFICIAL_ANIME = "http://mal-api.com/anime/%s"
+
     def __init__(self, **settings):
-        API.__init__(self, __name__)
+        AbstractAPI.__init__(self, __name__)
         self.settings = settings
 
         if not 'username' in self.settings.keys():
@@ -29,6 +32,9 @@ class MyAnimeList(API):
             raise Exception("Password required")
 
         self._auth = (settings['username'], settings['password'])
+
+    def search(self, anime):
+        pass
 
     def anime(self, title):
         """
@@ -64,17 +70,33 @@ class MyAnimeList(API):
         anime = self.anime(title)
         return (self._URL_ANIME_MAIN % (anime['id'], anime['title'])).replace(" ", "%20")
 
+    def experimental_titles(self, title=None):
+        if title is None:
+            return self._experimental_all_anime().keys()
+        else:
+            return self.titles(title)
+
+    def experimental_anime(self, anime):
+        return self._experimental_all_anime()[anime]
+
+    def experimental_ids(self):
+        return map(lambda x: self.experimental_anime(x)['id'], self.experimental_titles())
+
+    def unofficial_anime(self, id):
+        result = self._http_request(self._URL_UNOFFICIAL_ANIME % str(id))
+        return self._parse_unofficial_anime(result)
+
     def titles(self, title=None):
         if title is None:
-            self.log.warn("Support for listing all titles is experimental and incomplete.")
-            return self._all_titles()
+            self.log.debug("Retrieving all the titles from MAL is only experimentally supported through expr_titles.")
+            return []
         else:
             url = MyAnimeList._URL_ANIME_SEARCH_QUERY % "+".join(title.split(" "))
             mal_response = self._http_request(url, self._auth)
             anime_list = []
             if mal_response != "":
                 anime_list = self._parse_anime_search_result(mal_response)
-            return map(lambda x: x['title'], anime_list)
+            return map(lambda x: (x['title'], x['title']), anime_list)
 
     def _parse_anime_search_result(self, xml):
         """
@@ -88,6 +110,11 @@ class MyAnimeList(API):
                 anime[anime_attribute.tag] = anime_attribute.text
                 if anime_attribute.tag == 'episodes':
                     anime[anime_attribute.tag] = int(anime_attribute.text)
+                if anime_attribute.tag == 'synonyms':
+                    if anime_attribute.text is not None:
+                        anime[anime_attribute.tag] = anime_attribute.text.split("; ")
+                    else:
+                        anime[anime_attribute.tag] = []
             anime_list.append(anime)
         return anime_list
 
@@ -117,14 +144,48 @@ class MyAnimeList(API):
 
         return recommendations
 
-    def _all_titles(self):
-        response = self._http_request(MyAnimeList._URL_POWER_USER_ANIME_LIST, self._auth)
-        return self._parse_user_animelist_xml_result(response)
+    def _experimental_ensure_cache(self):
+        self._experimental_all_anime()
+
+    def _experimental_all_anime(self):
+        if 'experimental_titles' not in self.CACHE:
+            response = self._http_request(MyAnimeList._URL_POWER_USER_ANIME_LIST, self._auth)
+            self.CACHE['experimental_titles'] = self._parse_user_animelist_xml_result(response)
+        return self.CACHE['experimental_titles']
 
     def _parse_user_animelist_xml_result(self, xml):
-        xml_root = API._parse_xml(xml)
-        return map(lambda x: x.text, xml_root.xpath(".//series_title"))
+        xml_root = AbstractAPI._parse_xml(xml)
+        animes = {}
+        for anime_elem in xml_root.xpath(".//anime"):
+            anime = {}
+            anime['id'] = int(anime_elem.xpath(".//series_animedb_id/text()")[0])
+            anime['title'] = unicode(anime_elem.xpath(".//series_title/text()")[0])
+            synonyms_text = anime_elem.xpath(".//series_synonyms/text()")
+            if len(synonyms_text) == 0:
+                anime['synonyms'] = []
+            else:
+                anime['synonyms'] = anime_elem.xpath(".//series_synonyms/text()")[0].split("; ")
+            anime['synonyms'] = filter(lambda x: x != '', anime['synonyms'])
+            anime['type'] = int(anime_elem.xpath(".//series_type/text()")[0])
+            anime['episode_count'] = int(anime_elem.xpath(".//series_episodes/text()")[0])
+            anime['status'] = int(anime_elem.xpath(".//series_status/text()")[0])
+            anime['start'] = str(anime_elem.xpath(".//series_start/text()")[0])
+            anime['end'] = str(anime_elem.xpath(".//series_end/text()")[0])
+            anime['image'] = str(anime_elem.xpath(".//series_image/text()")[0])
+            animes[anime['title']] = anime
 
+        return animes
+
+    def _parse_unofficial_anime(self, json_value):
+        anime = json.loads(json_value)
+        anime['episode_count'] = anime['episodes']
+        anime['summary'] = anime['synopsis']
+        anime['synonyms'] = []
+        for lang in anime['other_titles']:
+            anime['synonyms'].append(anime['other_titles'][lang])
+        anime.pop('episodes', None)
+        anime.pop('summary', None)
+        return anime
 
 
 

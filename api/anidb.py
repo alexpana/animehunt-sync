@@ -1,13 +1,13 @@
-from api import API
+from api.abstract import AbstractAPI
 
 
-class AniDB(API):
+class AniDB(AbstractAPI):
     _ANIDB_ANIME_TITLES_SOURCE = "http://anidb.net/api/animetitles.xml.gz"
 
     _CACHE = {}
 
     def __init__(self):
-        API.__init__(self, __name__)
+        AbstractAPI.__init__(self, __name__)
         pass
 
     def anime(self, title):
@@ -16,7 +16,7 @@ class AniDB(API):
 
     def titles(self, title=None):
         self._ensure_cache_integrity()
-        return self._CACHE['titles'].keys()
+        return map(lambda x: (x, self._CACHE['titles'][x]['id']), self._CACHE['titles'])
 
     def synonyms(self, title):
         self._ensure_cache_integrity()

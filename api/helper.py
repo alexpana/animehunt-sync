@@ -11,8 +11,12 @@ class Helper():
     def canonic_form(title):
         if type(title) not in (str, unicode):
             return title
+
+        if title.find(" ") == -1:
+            return [title.lower().replace('`', '\'')]
+
         if title not in Helper._CACHE['canonic_forms']:
-            processed_title = title.lower().replace("-", " ")
+            processed_title = title.lower().replace("-", " ").replace('`', '\'')
             clean_title = ""
             ignored_characters = "()[]/.!:?`'\"~"
             paren_count = 0

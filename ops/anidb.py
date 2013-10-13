@@ -1,5 +1,5 @@
 from api.anidb import AniDB
-from core import Log
+from core.log import Log
 
 __author__ = 'Alex'
 

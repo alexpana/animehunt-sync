@@ -12,8 +12,8 @@ class HelperTest(unittest.TestCase):
         matching_titles = (
             ("clannad", "clannad the movie"),
             ("clannad movie", "clannad the movie"),
-            ("Ergo!", "ergo proxy"),
-            ("Ergo!", "proxy ergo"),
+            ("Ergo", "ergo proxy"),
+            ("Ergo", "proxy ergo"),
             ("clannad the movie", "clannad movie"))
 
         for match in matching_titles:
@@ -29,7 +29,7 @@ class HelperTest(unittest.TestCase):
         self.assertNotCanonicEqual("Clannad", "Clannad Movie")
 
     def test_canonic_equals_digits(self):
-        self.assertCanonicEqual("Kanon 2006", "Kannon (2006)")
+        self.assertCanonicEqual("Kanon 2006", "Kanon (2006)")
 
     def test_canonic_equals_dash1(self):
         self.assertCanonicEqual("Nodame Cantabile Paris-Hen", "Nodame Cantabile: Paris Hen")

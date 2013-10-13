@@ -1,9 +1,9 @@
 from api.anidb import AniDB
 from api.animeseason import AnimeSeason
-from core import Log
+from core.log import Log
 
 
-class AnimeSeasonOperations():
+class AnimeSeasonOperations:
     def __init__(self, db):
         self.log = Log.create_log(__name__)
         self.db = db

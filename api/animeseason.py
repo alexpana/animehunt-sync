@@ -1,9 +1,10 @@
-from api import API, Helper
+from api import Helper
+from api.abstract import AbstractAPI
 
 __author__ = 'Alex'
 
 
-class AnimeSeason(API):
+class AnimeSeason(AbstractAPI):
     _URL_TITLES = "http://www.animeseason.com/anime-list/"
 
     # Requires the title of the anime, formatted
@@ -12,7 +13,7 @@ class AnimeSeason(API):
     _INTERNAL_CACHE = {'animes': {}, 'titles': {}}
 
     def __init__(self):
-        API.__init__(self, __name__)
+        AbstractAPI.__init__(self, __name__)
         pass
 
     def titles(self, title=None):
@@ -22,8 +23,8 @@ class AnimeSeason(API):
         else:
             matching_titles = []
             for current_title in all_titles:
-                current_title = self._sanitize_title(current_title)
-                if Helper.canonic_matching(title, current_title):
+                sanitized_title = self._sanitize_title(current_title[1])
+                if Helper.canonic_matching(title, sanitized_title):
                     matching_titles.append(current_title)
         return matching_titles
 
@@ -51,7 +52,7 @@ class AnimeSeason(API):
             titles = dict(
                 map(lambda x: (x.text, x.attrib['href']), root_element.xpath(".//ul[@class='series_alpha']/li/a")))
             AnimeSeason._INTERNAL_CACHE["urls"] = titles
-        return AnimeSeason._INTERNAL_CACHE["urls"].keys()
+        return map(lambda x: (0, x), AnimeSeason._INTERNAL_CACHE["urls"].keys())
 
     def _parse_anime(self, html):
         root = self._parse_html(html)
