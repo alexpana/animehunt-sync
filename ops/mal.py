@@ -26,16 +26,42 @@ class MALOperations:
             if animehunt_id != -1:
                 self.sync_synonyms(title)
 
+    def sync_unmatched_titles(self):
+        unmatched_titles = self._find_unmatched_titles_by_id()
+        self.log.info("Found %d unmatched titles." % len(unmatched_titles))
+
+        match_count = 0
+        for anime_id in unmatched_titles:
+            mal_anime = self.api.unofficial_anime(anime_id)
+            mal_anime.pop('id')
+            db_anime = self.db.find_anime(mal_anime)
+
+            if db_anime is not None:
+                self._match_anime(mal_anime, db_anime)
+                self.log.info("Matched anime %s!" % mal_anime['title'])
+                match_count += 1
+
+        self.log.info("Matched %d animes." % len(match_count))
+
+    def _match_anime(self, anime, db_anime):
+        # update the conversion table
+        self.db.cursor.execute(
+            "UPDATE titles_mal SET animehunt_id = %d where mal_id = %d" % (db_anime['id'], anime['id']))
+        self.db.connection.commit()
+        self.db.merge_synonyms(db_anime['id'], anime['synonyms'], 4)
+
     def force_add_hentai(self):
         unmatched_titles = self._find_unmatched_titles_by_id()
-        hentai_list = []
+        anime_count = 0
         for title_id in unmatched_titles:
             anime = self.api.unofficial_anime(title_id)
             if 'Hentai' in anime['genres']:
-                hentai_list.append(anime)
-                #self.db.insert_anime(anime)
-                #self.db.merge_synonyms(anime)
-        pass
+                anime_count += 1
+                db_anime = self.db.insert_anime(anime)
+
+                self._match_anime(anime, db_anime)
+
+                self.log.info("Added hentai %s to the database." % anime['title'])
 
     def sync_synonyms(self, title):
         mal_anime = self.api.experimental_anime(title)

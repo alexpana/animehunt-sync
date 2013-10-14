@@ -82,8 +82,8 @@ class MyAnimeList(AbstractAPI):
     def experimental_ids(self):
         return map(lambda x: self.experimental_anime(x)['id'], self.experimental_titles())
 
-    def unofficial_anime(self, id):
-        result = self._http_request(self._URL_UNOFFICIAL_ANIME % str(id))
+    def unofficial_anime(self, anime_id):
+        result = self._http_request(self._URL_UNOFFICIAL_ANIME % str(anime_id))
         return self._parse_unofficial_anime(result)
 
     def titles(self, title=None):
@@ -180,9 +180,9 @@ class MyAnimeList(AbstractAPI):
         anime = json.loads(json_value)
         anime['episode_count'] = anime['episodes']
         anime['summary'] = anime['synopsis']
-        anime['synonyms'] = []
+        anime['synonyms'] = [anime['title']]
         for lang in anime['other_titles']:
-            anime['synonyms'].append(anime['other_titles'][lang])
+            anime['synonyms'] += anime['other_titles'][lang]
         anime.pop('episodes', None)
         anime.pop('summary', None)
         return anime

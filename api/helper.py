@@ -18,7 +18,7 @@ class Helper():
         if title not in Helper._CACHE['canonic_forms']:
             processed_title = title.lower().replace("-", " ").replace('`', '\'')
             clean_title = ""
-            ignored_characters = "()[]/.!:?`'\"~"
+            ignored_characters = "-()[]/.!:?`'\"~"
             paren_count = 0
             for c in processed_title:
                 if c == '(':
