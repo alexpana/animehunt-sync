@@ -15,8 +15,8 @@ class MyAnimeList(AbstractAPI):
     # Requires the anime ID and the anime TITLE
     _URL_ANIME_USERRECS = "http://myanimelist.net/anime/%s/%s/userrecs"
 
-    # Requires the anime ID and the anime TITLE
-    _URL_ANIME_MAIN = "http://myanimelist.net/anime/%s/%s/"
+    # Requires the anime ID
+    _URL_ANIME_MAIN = "http://myanimelist.net/anime/%d"
 
     # Requires the anime ID
     _URL_UNOFFICIAL_ANIME = "http://mal-api.com/anime/%s"
@@ -36,21 +36,11 @@ class MyAnimeList(AbstractAPI):
     def search(self, anime):
         pass
 
-    def _get_anime_by_title(self, title):
-        url = MyAnimeList._URL_ANIME_SEARCH_QUERY % "+".join(title.split(" "))
-        mal_response = self._http_request(url, self._auth)
-        if mal_response != "":
-            anime_list = self._parse_anime_search_result(mal_response)
-            for current_anime in anime_list:
-                if current_anime['title'] == title:
-                    return current_anime
-        return None
-
     def anime(self, **kwargs):
         if 'title' in kwargs:
             return self._get_anime_by_title(kwargs['title'])
         else:
-            raise NotImplementedError('Indexing by ID is not yet implemented.')
+            return self._get_anime_by_id(kwargs['id'])
 
     def recommendations(self, title):
         """
@@ -98,6 +88,50 @@ class MyAnimeList(AbstractAPI):
             if mal_response != "":
                 anime_list = self._parse_anime_search_result(mal_response)
             return map(lambda x: (x['title'], x['title']), anime_list)
+
+    def _get_anime_by_id(self, anime_id):
+        url = MyAnimeList._URL_ANIME_MAIN % anime_id
+        mal_response = self._http_request(url, self._auth)
+        return self._parse_anime_html(mal_response)
+
+    def _get_anime_by_title(self, title):
+        url = MyAnimeList._URL_ANIME_SEARCH_QUERY % "+".join(title.split(" "))
+        mal_response = self._http_request(url, self._auth)
+        if mal_response != "":
+            anime_list = self._parse_anime_search_result(mal_response)
+            for current_anime in anime_list:
+                if current_anime['title'] == title:
+                    return current_anime
+        return None
+
+    def _parse_anime_html(self, html):
+        anime = {}
+        root_element = self._parse_html(html)
+        attr_spans = root_element.xpath(".//span[@class='dark_text']")
+        for attr_span in attr_spans:
+            if attr_span.text == "Type:":
+                anime['type'] = attr_span.tail.strip()
+            if attr_span.text == "Episodes:":
+                anime['episode_count'] = int(attr_span.tail.strip())
+            if attr_span.text == "Status:":
+                anime['status'] = attr_span.tail.strip()
+            if attr_span.text == "Aired:":
+                anime['aired'] = attr_span.tail.strip()
+            if attr_span.text == "Producers:":
+                anime['producers'] = map(lambda x: x.text, attr_span.getparent().xpath(".//a"))
+            if attr_span.text == "Genres:":
+                anime['genres'] = map(lambda x: x.text.strip().lower(), attr_span.getparent().xpath(".//a"))
+            if attr_span.text == "Duration:":
+                anime['duration'] = attr_span.tail.strip()
+            if attr_span.text == "Rating:":
+                anime['rating'] = attr_span.tail.strip()
+
+        anime['summary'] = root_element.xpath(".//h2[text()='Synopsis']")[0].tail.strip()
+
+        anime['synonyms'] = map(lambda x: x.tail.strip(),
+                                root_element.xpath(".//h2[text()='Alternative Titles']")[0].getparent().xpath(
+                                    ".//div[@class='spaceit_pad']/span"))
+        return anime
 
     def _parse_anime_search_result(self, xml):
         """
@@ -187,6 +221,3 @@ class MyAnimeList(AbstractAPI):
         anime.pop('episodes', None)
         anime.pop('summary', None)
         return anime
-
-
-
