@@ -22,7 +22,7 @@ class AbstractAPI:
         """
         return []
 
-    def anime(self, title):
+    def anime(self, **kwargs):
         return {}
 
     def url(self, title):

@@ -28,11 +28,15 @@ class AnimeSeason(AbstractAPI):
                     matching_titles.append(current_title)
         return matching_titles
 
-    def anime(self, title):
-        if title not in self._INTERNAL_CACHE['animes']:
-            response = self._http_request(self.url(title))
-            self._INTERNAL_CACHE['animes'][title] = self._parse_anime(response)
-        return self._INTERNAL_CACHE['animes'][title]
+    def anime(self, **kwargs):
+        if 'title' in kwargs:
+            title = kwargs['title']
+            if title not in self._INTERNAL_CACHE['animes']:
+                response = self._http_request(self.url(title))
+                self._INTERNAL_CACHE['animes'][title] = self._parse_anime(response)
+            return self._INTERNAL_CACHE['animes'][title]
+        else:
+            raise NotImplementedError('Indexing by ID is not yet implemented.')
 
     def url(self, title):
         if not 'urls' in self._INTERNAL_CACHE:

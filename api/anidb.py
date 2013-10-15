@@ -10,9 +10,12 @@ class AniDB(AbstractAPI):
         AbstractAPI.__init__(self, __name__)
         pass
 
-    def anime(self, title):
+    def anime(self, **kwargs):
         self._ensure_cache_integrity()
-        return self._CACHE['titles'][title]
+        if 'title' in kwargs:
+            return self._CACHE['titles'][kwargs['title']]
+        else:
+            raise NotImplementedError('Indexing by ID is not yet implemented.')
 
     def titles(self, title=None):
         self._ensure_cache_integrity()

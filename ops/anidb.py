@@ -51,7 +51,7 @@ class AniDBOperations:
         self.db.cursor.execute("DELETE FROM synonyms WHERE animehunt_id=%s" % anime_id)
         self.db.connection.commit()
 
-        api_synonyms = self.api.anime(title)['all']
+        api_synonyms = self.api.anime(title=title)['all']
 
         # Attempt to insert the new synonyms into the DB
         for synonym in api_synonyms:
@@ -83,7 +83,7 @@ class AniDBOperations:
         self.db.cursor.execute("SELECT anidb_id FROM titles_anidb")
         db_indices = map(lambda x: int(x[0]), self.db.cursor.fetchall())
 
-        api_indices = map(lambda x: int(self.api.anime(x)['id']), self.api.titles())
+        api_indices = map(lambda x: int(self.api.anime(title=x)['id']), self.api.titles())
         new_indices = set(api_indices).difference(set(db_indices))
 
         # TODO: Finish this!
@@ -103,7 +103,7 @@ class AniDBOperations:
         # Add a conversion entry in the titles_anidb table
         self.db.cursor.execute(
             "INSERT INTO titles_anidb (animehunt_id, anidb_id) "
-            "VALUES (%s, %s)" % (anime_id, self.api.anime(title)['id'])
+            "VALUES (%s, %s)" % (anime_id, self.api.anime(title=title)['id'])
         )
         self.db.connection.commit()
 
@@ -129,4 +129,4 @@ class AniDBOperations:
                 self.log.info("Fixing missing conversion entry for %s." % title)
                 self.db.cursor.execute(
                     "INSERT INTO titles_anidb (animehunt_id, anidb_id)"
-                    "VALUES (%s, %s)" % (anime_id, self.api.anime(title)['id']))
+                    "VALUES (%s, %s)" % (anime_id, self.api.anime(title=title)['id']))

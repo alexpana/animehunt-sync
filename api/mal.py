@@ -36,20 +36,21 @@ class MyAnimeList(AbstractAPI):
     def search(self, anime):
         pass
 
-    def anime(self, title):
-        """
-        Returns the anime who's title is equal to the title parameter
-        """
+    def _get_anime_by_title(self, title):
         url = MyAnimeList._URL_ANIME_SEARCH_QUERY % "+".join(title.split(" "))
         mal_response = self._http_request(url, self._auth)
-
         if mal_response != "":
             anime_list = self._parse_anime_search_result(mal_response)
             for current_anime in anime_list:
                 if current_anime['title'] == title:
                     return current_anime
-
         return None
+
+    def anime(self, **kwargs):
+        if 'title' in kwargs:
+            return self._get_anime_by_title(kwargs['title'])
+        else:
+            raise NotImplementedError('Indexing by ID is not yet implemented.')
 
     def recommendations(self, title):
         """

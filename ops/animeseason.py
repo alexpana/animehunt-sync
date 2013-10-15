@@ -53,7 +53,7 @@ class AnimeSeasonOperations:
         anidb_title = anidb.search_title(title)
         if anidb_title is not None:
             self.log.info("Found match: %s. Attempting to match against database." % anidb_title)
-            anidb_id = anidb.anime(anidb_title)['id']
+            anidb_id = anidb.anime(title=anidb_title)['id']
             self.db.cursor.execute("SELECT animehunt_id FROM titles_anidb WHERE anidb_id=%s" % anidb_id)
             animehunt_id = self.db.cursor.fetchall()[0][0]
 

@@ -25,7 +25,7 @@ class AnimeseasonTest(unittest.TestCase):
     def test_anime_information(self):
         titles = self.api.titles("clannad")
         self.log.info(titles)
-        self.log.info(self.api.anime(titles[0][1]))
+        self.log.info(self.api.anime(title=titles[0][1]))
         self.log.info(self.api.recommendations(titles[0][1])[0])
 
     def test_title_search(self):
