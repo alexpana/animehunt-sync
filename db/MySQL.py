@@ -1,6 +1,6 @@
 import MySQLdb
 from api.helper import Helper
-from core import Log
+from core.log import Log
 
 
 class Database():
@@ -86,7 +86,7 @@ class Database():
             if result is not None:
                 return {'id': result[0], 'title': result[1]}
             else:
-                self.log.info("More than one anime was found with that name. Found ids are: %s", str(ids))
+                self.log.info("More than one anime was found with that name.")
                 return None
 
         self.log.info("No anime was found with that name in the database.")
